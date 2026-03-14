@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Updater Clover V2 — Atualiza, Faz Backup e Restaura EFI no macOS</title>
+  <meta name="description" content="Updater Clover V2 é um app macOS gratuito para atualizar arquivos essenciais do Clover, criar backups completos da EFI e consultar informações do sistema." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #4cff72;
+      --green-dim: #26c245;
+      --green-glow: rgba(76,255,114,0.18);
+      --green-border: rgba(76,255,114,0.28);
+      --bg: #0a0d0a;
+      --bg2: #0d120d;
+      --bg3: #111811;
+      --text: #e8f5e9;
+      --text-dim: #8fbc8f;
+      --card-bg: rgba(18,28,18,0.85);
+      --card-border: rgba(76,255,114,0.15);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ── MATRIX CANVAS ── */
+    #matrix-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 60px;
+      background: rgba(10,13,10,0.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo img {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+    }
+    .nav-logo span { color: var(--green); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.6rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--green); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+    }
+    .lang-btn {
+      background: rgba(76,255,114,0.08);
+      border: 1px solid var(--green-border);
+      color: var(--green);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .lang-btn:hover { background: rgba(76,255,114,0.2); }
+    .lang-btn.active {
+      background: var(--green);
+      color: #0a0d0a;
+    }
+
+    .btn-donate-nav {
+      background: var(--green);
+      color: #0a0d0a;
+      font-weight: 700;
+      font-size: .82rem;
+      padding: 7px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-donate-nav:hover { opacity: .85; transform: translateY(-1px); }
+
+    /* ── MAIN WRAPPER ── */
+    main { position: relative; z-index: 1; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 2rem 80px;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .55rem;
+      margin-bottom: 2.5rem;
+    }
+    .badge {
+      background: rgba(76,255,114,0.08);
+      border: 1px solid var(--green-border);
+      color: var(--green-dim);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+    }
+
+    .hero-icon {
+      width: 110px; height: 110px;
+      border-radius: 26px;
+      box-shadow: 0 0 40px rgba(76,255,114,0.35), 0 0 80px rgba(76,255,114,0.12);
+      margin-bottom: 2rem;
+      animation: icon-float 3.5s ease-in-out infinite;
+    }
+    @keyframes icon-float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -.02em;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 .clover { color: var(--green); }
+
+    .hero-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.22rem);
+      color: var(--text-dim);
+      max-width: 580px;
+      line-height: 1.7;
+      margin: 0 auto 2.5rem;
+    }
+    .hero-subtitle strong { color: var(--text); }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: #0a0d0a;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 14px 32px;
+      border-radius: 12px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 0 24px rgba(76,255,114,.3);
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-2px); box-shadow: 0 0 40px rgba(76,255,114,.45); }
+
+    .btn-secondary {
+      background: rgba(76,255,114,0.08);
+      border: 1.5px solid var(--green-border);
+      color: var(--green);
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 32px;
+      border-radius: 12px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background .2s, transform .15s;
+    }
+    .btn-secondary:hover { background: rgba(76,255,114,0.16); transform: translateY(-2px); }
+
+    .hero-mockup {
+      margin-top: 4rem;
+      max-width: 860px;
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(76,255,114,0.15), 0 30px 80px rgba(0,0,0,.6);
+      border: 1px solid var(--card-border);
+    }
+    .hero-mockup img { width: 100%; display: block; }
+
+    /* ── STATS ── */
+    .stats {
+      padding: 4rem 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 4rem;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--card-border);
+      background: var(--bg2);
+    }
+    .stat-item { text-align: center; }
+    .stat-number {
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: .85rem;
+      color: var(--text-dim);
+      margin-top: .4rem;
+      font-weight: 500;
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .section-tag {
+      display: inline-block;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+    }
+    .section-desc {
+      color: var(--text-dim);
+      margin-top: .9rem;
+      font-size: 1.05rem;
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.7;
+    }
+
+    /* ── FEATURES ── */
+    #features {
+      padding: 7rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 1.4rem;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      transition: border-color .25s, box-shadow .25s, transform .2s;
+      backdrop-filter: blur(8px);
+    }
+    .feature-card:hover {
+      border-color: rgba(76,255,114,.5);
+      box-shadow: 0 0 30px rgba(76,255,114,.1);
+      transform: translateY(-4px);
+    }
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: block;
+      filter: drop-shadow(0 0 8px var(--green));
+    }
+    .feature-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: .6rem;
+      color: var(--text);
+    }
+    .feature-desc {
+      font-size: .9rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+    .feature-tag {
+      display: inline-block;
+      margin-top: 1rem;
+      background: rgba(76,255,114,0.1);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* what it updates */
+    .files-box {
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-top: 2.5rem;
+    }
+    .files-box h3 {
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 1.2rem;
+    }
+    .files-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+    }
+    .file-chip {
+      background: rgba(76,255,114,0.07);
+      border: 1px solid var(--green-border);
+      color: var(--green-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+
+    /* ── SCREENSHOTS ── */
+    #screenshots {
+      padding: 7rem 2rem;
+      background: var(--bg2);
+    }
+    #screenshots .section-header { max-width: 1100px; margin-left: auto; margin-right: auto; margin-bottom: 3.5rem; }
+
+    .screenshots-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+    }
+    @media (max-width: 860px) {
+      .screenshots-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 540px) {
+      .screenshots-grid { grid-template-columns: 1fr; }
+    }
+
+    .screenshot-item {
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .screenshot-item:hover {
+      transform: scale(1.025);
+      box-shadow: 0 0 30px rgba(76,255,114,.2);
+      border-color: rgba(76,255,114,.45);
+    }
+    .screenshot-item img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+    }
+    .screenshot-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,.85));
+      padding: .8rem 1rem;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .screenshot-badge {
+      display: inline-block;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-right: 5px;
+      text-transform: uppercase;
+    }
+    .badge-dark { background: #1a2a1a; color: var(--green); border: 1px solid var(--green-border); }
+    .badge-light { background: #e8f5e9; color: #1a5c1a; }
+
+    /* ── LIGHTBOX ── */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(0,0,0,.92);
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 900px;
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 0 60px rgba(76,255,114,.2);
+      border: 1px solid var(--card-border);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 1.5rem; right: 2rem;
+      font-size: 2rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      background: none; border: none;
+    }
+    .lightbox-close:hover { color: var(--green); }
+
+    /* ── THEMES ── */
+    #temas {
+      padding: 7rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.4rem;
+    }
+    @media (max-width: 760px) {
+      .themes-grid { grid-template-columns: 1fr; }
+    }
+
+    .theme-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .theme-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 30px rgba(76,255,114,.15);
+      border-color: rgba(76,255,114,.4);
+    }
+    .theme-card img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+    }
+    .theme-info {
+      padding: 1.2rem 1.5rem;
+    }
+    .theme-name {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: .4rem;
+    }
+    .theme-desc {
+      font-size: .85rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+
+    /* ── HOW TO USE ── */
+    #como-usar {
+      padding: 7rem 2rem;
+      background: var(--bg2);
+    }
+    #como-usar .inner {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.4rem;
+    }
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      position: relative;
+      transition: border-color .25s, transform .2s;
+    }
+    .step-card:hover {
+      border-color: rgba(76,255,114,.45);
+      transform: translateY(-3px);
+    }
+    .step-number {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: rgba(76,255,114,.2);
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+      margin-bottom: .8rem;
+    }
+    .step-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+    .step-desc {
+      font-size: .87rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    /* ── DONATION ── */
+    #donate {
+      padding: 7rem 2rem;
+      max-width: 780px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .donate-card {
+      background: var(--card-bg);
+      border: 1px solid var(--green-border);
+      border-radius: 24px;
+      padding: 3.5rem 2.5rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 60px rgba(76,255,114,.08);
+    }
+    .donate-tag {
+      display: inline-block;
+      background: rgba(76,255,114,.1);
+      border: 1px solid var(--green-border);
+      color: var(--green);
+      font-size: .8rem;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .donate-price {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: .3rem;
+    }
+    .donate-price span {
+      font-size: 1.2rem;
+      color: var(--text-dim);
+      font-family: 'Inter', sans-serif;
+    }
+    .donate-subtitle {
+      color: var(--text-dim);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    .donate-list {
+      list-style: none;
+      text-align: left;
+      max-width: 400px;
+      margin: 0 auto 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .7rem;
+    }
+    .donate-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .9rem;
+      color: var(--text);
+    }
+    .donate-list li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 900;
+      font-size: .9rem;
+    }
+    .btn-donate {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green);
+      color: #0a0d0a;
+      font-weight: 800;
+      font-size: 1.05rem;
+      padding: 16px 38px;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 0 28px rgba(76,255,114,.35);
+    }
+    .btn-donate:hover { opacity: .87; transform: translateY(-2px); box-shadow: 0 0 50px rgba(76,255,114,.5); }
+
+    /* ── FAQ ── */
+    #faq {
+      padding: 7rem 2rem;
+      background: var(--bg2);
+    }
+    #faq .inner {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .faq-item {
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: .8rem;
+      transition: border-color .2s;
+    }
+    .faq-item.open { border-color: rgba(76,255,114,.45); }
+    .faq-question {
+      width: 100%;
+      background: var(--card-bg);
+      border: none;
+      padding: 1.2rem 1.5rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      color: var(--text);
+      font-size: .95rem;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: background .2s;
+    }
+    .faq-question:hover { background: rgba(76,255,114,.05); }
+    .faq-icon {
+      color: var(--green);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      transition: transform .25s;
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s ease, padding .25s;
+      background: var(--bg3);
+      font-size: .9rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      padding: 0 1.5rem;
+    }
+    .faq-item.open .faq-answer {
+      max-height: 400px;
+      padding: 1.2rem 1.5rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--card-border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      font-size: .83rem;
+      color: var(--text-dim);
+    }
+    footer a { color: var(--green); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.6rem;
+      margin-bottom: .8rem;
+    }
+
+    /* ── LANG CONTENT ── */
+    [data-en] { display: none; }
+    body.lang-en [data-pt] { display: none; }
+    body.lang-en [data-en] { display: inline; }
+    .block-pt { display: block; }
+    .block-en { display: none; }
+    body.lang-en .block-pt { display: none; }
+    body.lang-en .block-en { display: block; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+      .hero h1 { font-size: 2.2rem; }
+      .stats { gap: 2rem; }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(76,255,114,.3); border-radius: 3px; }
+
+    /* ── TERMINAL LOG STYLE ── */
+    .log-line {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem;
+      color: var(--green);
+      background: rgba(0,0,0,.4);
+      border-left: 2px solid var(--green);
+      padding: 6px 14px;
+      border-radius: 0 6px 6px 0;
+      margin-top: .5rem;
+      display: block;
+    }
+
+    .glow-text {
+      text-shadow: 0 0 20px rgba(76,255,114,.5);
+    }
+
+    /* SCROLL REVEAL */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+  </style>
+</head>
+<body class="lang-pt">
+
+<!-- MATRIX CANVAS -->
+<canvas id="matrix-canvas"></canvas>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="Screenshot" />
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <img src="assets/images/updater-clover-icon.png" alt="Updater Clover Icon" />
+    <span>Updater</span>&nbsp;Clover V2
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features" data-pt>Recursos</a><a href="#features" data-en>Features</a></li>
+    <li><a href="#screenshots" data-pt>Screenshots</a><a href="#screenshots" data-en>Screenshots</a></li>
+    <li><a href="#temas" data-pt>Temas</a><a href="#temas" data-en>Themes</a></li>
+    <li><a href="#como-usar" data-pt>Como Usar</a><a href="#como-usar" data-en>How to Use</a></li>
+    <li><a href="#donate" data-pt>Doação</a><a href="#donate" data-en>Donate</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="lang-btn active" id="btn-pt" onclick="setLang('pt')">🇧🇷 PT</button>
+    <button class="lang-btn" id="btn-en" onclick="setLang('en')">🇺🇸 EN</button>
+    <a class="btn-donate-nav" href="https://www.paypal.com/donate?business=picelli1974%40outlook.com&amount=4.99&currency_code=USD&item_name=Updater+Clover+V2+Donation" target="_blank">
+      <span>☕</span> <span data-pt>Apoiar</span><span data-en>Donate</span>
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-badges reveal">
+      <span class="badge">🍎 macOS Ventura 13.7+</span>
+      <span class="badge">🍎 Sonoma 14.x</span>
+      <span class="badge">🍎 Sequoia 15.x</span>
+      <span class="badge">🍎 Tahoe 26.x</span>
+      <span class="badge">🌐 PT + EN</span>
+      <span class="badge">🎨 3 Temas</span>
+      <span class="badge">💚 Gratuito</span>
+    </div>
+
+    <img class="hero-icon reveal" src="assets/images/updater-clover-icon.png" alt="Updater Clover V2 Icon" />
+
+    <h1 class="reveal glow-text">
+      <span class="block-pt">Updater <span class="clover">Clover</span> V2</span>
+      <span class="block-en">Updater <span class="clover">Clover</span> V2</span>
+    </h1>
+
+    <p class="hero-subtitle reveal">
+      <span class="block-pt">
+        O app macOS para <strong>atualizar o Clover</strong>, criar <strong>backups completos da EFI</strong> e restaurar com um clique. Simples, seguro e gratuito.
+      </span>
+      <span class="block-en">
+        The macOS app to <strong>update Clover</strong>, create <strong>full EFI backups</strong>, and restore with one click. Simple, safe, and free.
+      </span>
+    </p>
+
+    <div class="hero-actions reveal">
+      <a class="btn-primary" href="https://github.com/maxpicelli/-Updater-Clover-v2-" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.57v-2.01c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.65.25 2.87.12 3.17.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.21.69.82.57C20.56 21.79 24 17.3 24 12 24 5.37 18.63 0 12 0z"/></svg>
+        <span data-pt>Ver no GitHub</span><span data-en>View on GitHub</span>
+      </a>
+      <a class="btn-secondary" href="https://www.paypal.com/donate?business=picelli1974%40outlook.com&amount=4.99&currency_code=USD&item_name=Updater+Clover+V2+Donation" target="_blank">
+        ☕ <span data-pt>Fazer Doação · USD $4,99</span><span data-en>Donate · USD $4.99</span>
+      </a>
+    </div>
+
+    <div class="hero-mockup reveal">
+      <img src="assets/images/update-clover-dark.png" alt="Updater Clover V2 — Update Clover tab" />
+    </div>
+  </section>
+
+  <!-- ── STATS ── -->
+  <div class="stats">
+    <div class="stat-item reveal">
+      <div class="stat-number">4</div>
+      <div class="stat-label" data-pt>Abas Funcionais</div>
+      <div class="stat-label" data-en>Functional Tabs</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number">3</div>
+      <div class="stat-label" data-pt>Temas Visuais</div>
+      <div class="stat-label" data-en>Visual Themes</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number">2</div>
+      <div class="stat-label" data-pt>Idiomas (PT + EN)</div>
+      <div class="stat-label" data-en>Languages (PT + EN)</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number">$0</div>
+      <div class="stat-label" data-pt>Custo — 100% Gratuito</div>
+      <div class="stat-label" data-en>Cost — 100% Free</div>
+    </div>
+  </div>
+
+  <!-- ── FEATURES ── -->
+  <section id="features">
+    <div class="section-header reveal">
+      <span class="section-tag" data-pt>Recursos</span><span class="section-tag" data-en>Features</span>
+      <h2 class="section-title">
+        <span class="block-pt">4 Abas Poderosas em 1 App</span>
+        <span class="block-en">4 Powerful Tabs in 1 App</span>
+      </h2>
+      <p class="section-desc">
+        <span class="block-pt">Tudo que você precisa para gerenciar o bootloader Clover e a partição EFI do seu Hackintosh.</span>
+        <span class="block-en">Everything you need to manage the Clover bootloader and your Hackintosh EFI partition.</span>
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <!-- Update Clover -->
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔄</span>
+        <div class="feature-title">Update Clover</div>
+        <p class="feature-desc block-pt">
+          Atualiza os arquivos essenciais do Clover diretamente na partição EFI. Suporte a modo completo (sincroniza <code>tools</code>) e modo simples (apenas os arquivos principais).
+        </p>
+        <p class="feature-desc block-en">
+          Updates essential Clover files directly on the EFI partition. Supports full mode (syncs <code>tools</code>) and simple mode (only main files).
+        </p>
+        <span class="feature-tag">Full update · UEFI drivers</span>
+      </div>
+
+      <!-- EFI Backup -->
+      <div class="feature-card reveal">
+        <span class="feature-icon">💾</span>
+        <div class="feature-title">EFI Backup</div>
+        <p class="feature-desc block-pt">
+          Cria backups completos da EFI em <code>~/EFI_BACKUPS</code>. Lista todos os backups salvos, permite restaurar para qualquer partição EFI com um clique.
+        </p>
+        <p class="feature-desc block-en">
+          Creates full EFI backups in <code>~/EFI_BACKUPS</code>. Lists all saved backups and allows restoring to any EFI partition with one click.
+        </p>
+        <span class="feature-tag">~/EFI_BACKUPS · Restore EFI</span>
+      </div>
+
+      <!-- Info System -->
+      <div class="feature-card reveal">
+        <span class="feature-icon">ℹ️</span>
+        <div class="feature-title">Info System</div>
+        <p class="feature-desc block-pt">
+          Exibe informações completas do hardware: CPU, GPU, memória, macOS, versão do Clover, partição EFI, discos externos. Gera screenshot com um clique.
+        </p>
+        <p class="feature-desc block-en">
+          Displays complete hardware info: CPU, GPU, memory, macOS, Clover version, EFI partition, external disks. Generates a screenshot with one click.
+        </p>
+        <span class="feature-tag">Hardware · Boot · Disks</span>
+      </div>
+
+      <!-- Open Sym -->
+      <div class="feature-card reveal">
+        <span class="feature-icon">📂</span>
+        <div class="feature-title">Open Sym</div>
+        <p class="feature-desc block-pt">
+          Abre diretamente a pasta <code>sym</code> configurada no app — a fonte principal dos arquivos do Clover. Pesquisa automática ao iniciar o app.
+        </p>
+        <p class="feature-desc block-en">
+          Opens the configured <code>sym</code> folder directly — the main source of Clover files. Automatic search on app launch.
+        </p>
+        <span class="feature-tag">sym · Auto search</span>
+      </div>
+    </div>
+
+    <!-- Files Box -->
+    <div class="files-box reveal">
+      <h3 data-pt>📄 Arquivos atualizados pelo app</h3>
+      <h3 data-en>📄 Files updated by the app</h3>
+      <div class="files-list">
+        <span class="file-chip">EFI/BOOT/BOOTX64.efi</span>
+        <span class="file-chip">EFI/CLOVER/CLOVERX64.efi</span>
+        <span class="file-chip">ApfsDriverLoader.efi</span>
+        <span class="file-chip">OpenRuntime.efi</span>
+        <span class="file-chip">VBoxHfs.efi</span>
+        <span class="file-chip">EFI/CLOVER/tools/ (modo full)</span>
+      </div>
+      <span class="log-line">[Update] EFI bootloader: Clover 5171 (release, commit f6a3d61c3)</span>
+    </div>
+  </section>
+
+  <!-- ── SCREENSHOTS ── -->
+  <section id="screenshots">
+    <div class="section-header reveal">
+      <span class="section-tag" data-pt>Interface</span><span class="section-tag" data-en>Interface</span>
+      <h2 class="section-title">
+        <span class="block-pt">Veja o App em Ação</span>
+        <span class="block-en">See the App in Action</span>
+      </h2>
+      <p class="section-desc">
+        <span class="block-pt">Interface moderna com tema escuro e claro. Clique em qualquer imagem para ampliar.</span>
+        <span class="block-en">Modern interface with dark and light themes. Click any image to enlarge.</span>
+      </p>
+    </div>
+
+    <div class="screenshots-grid">
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/update-clover-dark.png')">
+        <img src="assets/images/update-clover-dark.png" alt="Update Clover tab — Dark" loading="lazy" />
+        <div class="screenshot-label">
+          <span class="screenshot-badge badge-dark">Dark</span>
+          Update Clover
+        </div>
+      </div>
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/update-clover-light.png')">
+        <img src="assets/images/update-clover-light.png" alt="Update Clover tab — Light" loading="lazy" />
+        <div class="screenshot-label">
+          <span class="screenshot-badge badge-light">Light</span>
+          Update Clover
+        </div>
+      </div>
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/efi-backup-dark.png')">
+        <img src="assets/images/efi-backup-dark.png" alt="EFI Backup tab — Dark" loading="lazy" />
+        <div class="screenshot-label">
+          <span class="screenshot-badge badge-dark">Dark</span>
+          EFI Backup
+        </div>
+      </div>
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/efi-backup-light.png')">
+        <img src="assets/images/efi-backup-light.png" alt="EFI Backup tab — Light" loading="lazy" />
+        <div class="screenshot-label">
+          <span class="screenshot-badge badge-light">Light</span>
+          EFI Backup
+        </div>
+      </div>
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/info-system-dark.png')">
+        <img src="assets/images/info-system-dark.png" alt="Info System tab — Dark" loading="lazy" />
+        <div class="screenshot-label">
+          <span class="screenshot-badge badge-dark">Dark</span>
+          Info System
+        </div>
+      </div>
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/info-system-light.png')">
+        <img src="assets/images/info-system-light.png" alt="Info System tab — Light" loading="lazy" />
+        <div class="screenshot-label">
+          <span class="screenshot-badge badge-light">Light</span>
+          Info System
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── THEMES ── -->
+  <section id="temas">
+    <div class="section-header reveal">
+      <span class="section-tag" data-pt>Personalização</span><span class="section-tag" data-en>Customization</span>
+      <h2 class="section-title">
+        <span class="block-pt">3 Temas para Todos os Gostos</span>
+        <span class="block-en">3 Themes for Every Taste</span>
+      </h2>
+      <p class="section-desc">
+        <span class="block-pt">Escolha o tema que combina com você — ou deixe o app seguir o tema do sistema automaticamente.</span>
+        <span class="block-en">Choose the theme that suits you — or let the app follow the system theme automatically.</span>
+      </p>
+    </div>
+
+    <div class="themes-grid">
+      <div class="theme-card reveal">
+        <img src="assets/images/update-clover-dark.png" alt="Tema Dark" loading="lazy" />
+        <div class="theme-info">
+          <div class="theme-name">🌑 <span data-pt>Modo Escuro</span><span data-en>Dark Mode</span></div>
+          <p class="theme-desc block-pt">Interface escura e elegante. Reduz o cansaço visual — perfeito para uso noturno e ambientes profissionais.</p>
+          <p class="theme-desc block-en">Elegant dark interface. Reduces eye strain — perfect for nighttime use and professional environments.</p>
+        </div>
+      </div>
+      <div class="theme-card reveal">
+        <img src="assets/images/update-clover-light.png" alt="Tema Light" loading="lazy" />
+        <div class="theme-info">
+          <div class="theme-name">☀️ <span data-pt>Modo Claro</span><span data-en>Light Mode</span></div>
+          <p class="theme-desc block-pt">Interface clara e limpa, perfeita para ambientes bem iluminados. Confortável para uso diurno.</p>
+          <p class="theme-desc block-en">Clean and bright interface, perfect for well-lit environments. Comfortable for daytime use.</p>
+        </div>
+      </div>
+      <div class="theme-card reveal">
+        <img src="assets/images/info-system-dark.png" alt="Tema System" loading="lazy" />
+        <div class="theme-info">
+          <div class="theme-name">⚙️ <span data-pt>Automático (Sistema)</span><span data-en>Auto (System)</span></div>
+          <p class="theme-desc block-pt">Segue automaticamente o tema do macOS. Muda quando o sistema muda — sem configuração manual.</p>
+          <p class="theme-desc block-en">Automatically follows macOS theme. Changes when the system changes — no manual setup needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW TO USE ── -->
+  <section id="como-usar">
+    <div class="inner">
+      <div class="section-header reveal">
+        <span class="section-tag" data-pt>Tutorial</span><span class="section-tag" data-en>Tutorial</span>
+        <h2 class="section-title">
+          <span class="block-pt">Como Usar o Updater Clover V2</span>
+          <span class="block-en">How to Use Updater Clover V2</span>
+        </h2>
+        <p class="section-desc">
+          <span class="block-pt">Cinco passos simples para atualizar o seu Clover de forma segura.</span>
+          <span class="block-en">Five simple steps to safely update your Clover.</span>
+        </p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-number">01</div>
+          <div class="step-title" data-pt>Selecionar Clover v2</div>
+          <div class="step-title" data-en>Select Clover v2</div>
+          <p class="step-desc block-pt">Clique em <strong>Select folder or zip</strong> e escolha a pasta extraída ou o arquivo <code>.zip</code> do CloverV2.</p>
+          <p class="step-desc block-en">Click <strong>Select folder or zip</strong> and choose the extracted folder or the CloverV2 <code>.zip</code> file.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-number">02</div>
+          <div class="step-title" data-pt>Escolher Partição EFI</div>
+          <div class="step-title" data-en>Choose EFI Partition</div>
+          <p class="step-desc block-pt">Selecione no menu a partição EFI do disco desejado (ex: <code>disk2s1</code>).</p>
+          <p class="step-desc block-en">Select the EFI partition of the desired disk from the menu (e.g. <code>disk2s1</code>).</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-number">03</div>
+          <div class="step-title" data-pt>Montar a EFI</div>
+          <div class="step-title" data-en>Mount the EFI</div>
+          <p class="step-desc block-pt">Se necessário, clique em <strong>Open EFI</strong> para montar a partição. O app pedirá senha de administrador.</p>
+          <p class="step-desc block-en">If needed, click <strong>Open EFI</strong> to mount the partition. The app will ask for an admin password.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-number">04</div>
+          <div class="step-title" data-pt>Escolher Modo</div>
+          <div class="step-title" data-en>Choose Mode</div>
+          <p class="step-desc block-pt">Selecione o modo: <strong>Full update</strong> (sincroniza tools), <strong>BOOTX64 + CLOVERX64</strong> ou <strong>Update UEFI Drivers</strong>.</p>
+          <p class="step-desc block-en">Select the mode: <strong>Full update</strong> (syncs tools), <strong>BOOTX64 + CLOVERX64</strong> or <strong>Update UEFI Drivers</strong>.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-number">05</div>
+          <div class="step-title" data-pt>Executar a Atualização</div>
+          <div class="step-title" data-en>Run the Update</div>
+          <p class="step-desc block-pt">Clique em <strong>Run update</strong>. Acompanhe o log em tempo real. O app faz o backup automático antes de atualizar.</p>
+          <p class="step-desc block-en">Click <strong>Run update</strong>. Follow the real-time log. The app makes an automatic backup before updating.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DONATE ── -->
+  <section id="donate">
+    <div class="donate-card reveal">
+      <span class="donate-tag" data-pt>💚 App 100% Gratuito</span>
+      <span class="donate-tag" data-en>💚 100% Free App</span>
+      <div class="donate-price">USD $4.99 <span data-pt>sugerido</span><span data-en>suggested</span></div>
+      <p class="donate-subtitle block-pt">
+        O Updater Clover V2 é completamente gratuito. Se ele te ajudou a salvar tempo e proteger sua EFI, considere fazer uma doação para apoiar o desenvolvimento. ☕
+      </p>
+      <p class="donate-subtitle block-en">
+        Updater Clover V2 is completely free. If it helped you save time and protect your EFI, consider donating to support development. ☕
+      </p>
+      <ul class="donate-list">
+        <li data-pt>App 100% gratuito — sem licença, sem assinatura</li>
+        <li data-en>100% free app — no license, no subscription</li>
+        <li data-pt>Atualização do Clover com segurança e backups automáticos</li>
+        <li data-en>Safe Clover update with automatic backups</li>
+        <li data-pt>Interface em Português (BR) e English</li>
+        <li data-en>Interface in Portuguese (BR) and English</li>
+        <li data-pt>3 temas: Dark 🌑, Light ☀️ e Automático ⚙️</li>
+        <li data-en>3 themes: Dark 🌑, Light ☀️ and Auto ⚙️</li>
+        <li data-pt>Compatível com Hackintosh e Mac nativos</li>
+        <li data-en>Compatible with Hackintosh and native Macs</li>
+        <li data-pt>Código aberto no GitHub</li>
+        <li data-en>Open source on GitHub</li>
+      </ul>
+      <a class="btn-donate" href="https://www.paypal.com/donate?business=picelli1974%40outlook.com&amount=4.99&currency_code=USD&item_name=Updater+Clover+V2+Donation" target="_blank">
+        ☕ <span data-pt>Apoiar via PayPal — USD $4,99</span><span data-en>Support via PayPal — USD $4.99</span>
+      </a>
+      <p style="margin-top:1.2rem;font-size:.8rem;color:var(--text-dim);" data-pt>
+        Dúvidas? <a href="/cdn-cgi/l/email-protection#92e2fbf1f7fefefba3aba5a6d2fbf1fefde7f6bcf1fdff" style="color:var(--green)"><span class="__cf_email__" data-cfemail="cebea7adaba2a2a7fff7f9fa8ea7ada2a1bbaae0ada1a3">[email&#160;protected]</span></a>
+      </p>
+      <p style="margin-top:1.2rem;font-size:.8rem;color:var(--text-dim);" data-en>
+        Questions? <a href="/cdn-cgi/l/email-protection#33435a50565f5f5a020a0407735a505f5c46571d505c5e" style="color:var(--green)"><span class="__cf_email__" data-cfemail="3f4f565c5a5353560e06080b7f565c53504a5b115c5052">[email&#160;protected]</span></a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ── FAQ ── -->
+  <section id="faq">
+    <div class="inner">
+      <div class="section-header reveal">
+        <span class="section-tag">FAQ</span>
+        <h2 class="section-title">
+          <span class="block-pt">Perguntas Frequentes</span>
+          <span class="block-en">Frequently Asked Questions</span>
+        </h2>
+      </div>
+
+      <!-- PT FAQs -->
+      <div class="block-pt">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            O app é realmente gratuito?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Sim! O Updater Clover V2 é 100% gratuito e open source. Se quiser apoiar o desenvolvimento, há um botão de doação opcional de USD $4,99 via PayPal.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Como baixo o app?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Acesse o repositório no GitHub: <strong>github.com/maxpicelli/-Updater-Clover-v2-</strong>. Faça o download da última versão disponível na seção Releases.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            O app faz backup automático antes de atualizar?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Sim. Antes de qualquer atualização, o app cria automaticamente um backup completo da EFI em <code>~/EFI_BACKUPS</code> com o nome da versão do Clover e a data.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Funciona em Hackintosh e Mac nativo?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Sim! O app foi desenvolvido e testado em configurações Hackintosh com Clover. A aba Info System exibe o bootloader e SMBios corretamente.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            O app pedirá senha de administrador?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Sim, algumas ações exigem senha de administrador para montar ou modificar a partição EFI. O app pode mostrar seu próprio alerta ou o macOS pode exibir a janela nativa do Acesso às Chaves.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            A EFI não aparece na lista — o que faço?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Clique em <strong>Refresh EFIs</strong> para atualizar a lista. Confirme se o disco está conectado. Verifique se a EFI já não está montada.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Como restaurar um backup EFI?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Abra a aba <strong>EFI Backup</strong>, selecione um backup válido da lista, escolha a partição EFI correta e clique em <strong>Restore EFI</strong>.</div>
+        </div>
+      </div>
+
+      <!-- EN FAQs -->
+      <div class="block-en">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Is the app really free?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Yes! Updater Clover V2 is 100% free and open source. If you want to support development, there's an optional USD $4.99 donation button via PayPal.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            How do I download the app?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Visit the GitHub repository: <strong>github.com/maxpicelli/-Updater-Clover-v2-</strong>. Download the latest version from the Releases section.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Does the app automatically back up before updating?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Yes. Before any update, the app automatically creates a full EFI backup in <code>~/EFI_BACKUPS</code> named with the Clover version and date.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Does it work on Hackintosh and native Mac?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Yes! The app was developed and tested on Hackintosh configurations with Clover. The Info System tab correctly displays the bootloader and SMBios.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Will the app ask for an admin password?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Yes, some actions require an administrator password to mount or modify the EFI partition. The app may show its own prompt or macOS may display the native Keychain Access window.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            The EFI doesn't appear in the list — what do I do?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Click <strong>Refresh EFIs</strong> to update the list. Confirm the disk is connected. Check if the EFI is already mounted.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            How do I restore an EFI backup?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">Open the <strong>EFI Backup</strong> tab, select a valid backup from the list, choose the correct EFI partition, and click <strong>Restore EFI</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="https://github.com/maxpicelli/-Updater-Clover-v2-" target="_blank">GitHub</a>
+    <a href="https://maxpicelli.github.io/macOS-updater-suite/" target="_blank">macOS Updater Suite</a>
+    <a href="/cdn-cgi/l/email-protection#06766f65636a6a6f373f3132466f656a6973622865696b">Email</a>
+    <a href="https://www.paypal.com/donate?business=picelli1974%40outlook.com&amount=4.99&currency_code=USD&item_name=Updater+Clover+V2+Donation" target="_blank">☕ Donate</a>
+  </div>
+  <p>
+    <span data-pt>© 2026 Updater Clover V2 — by Max.1974 · App gratuito e open source</span>
+    <span data-en>© 2026 Updater Clover V2 — by Max.1974 · Free and open source app</span>
+  </p>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ─── MATRIX RAIN ─── */
+(function(){
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, cols, drops;
+
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    cols  = Math.floor(W / 18);
+    drops = Array(cols).fill(1);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>[]{}/?';
+
+  function draw(){
+    ctx.fillStyle = 'rgba(10,13,10,0.05)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#26c245';
+    ctx.font = '15px JetBrains Mono, monospace';
+    drops.forEach((y, i) => {
+      const ch = chars[Math.floor(Math.random()*chars.length)];
+      ctx.fillStyle = y === 1 ? '#afffbf' : '#26c245';
+      ctx.fillText(ch, i*18, y*18);
+      if(y*18 > H && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }
+  setInterval(draw, 50);
+})();
+
+/* ─── LANG SWITCH ─── */
+function setLang(lang){
+  document.body.className = lang === 'en' ? 'lang-en' : 'lang-pt';
+  document.getElementById('btn-pt').classList.toggle('active', lang==='pt');
+  document.getElementById('btn-en').classList.toggle('active', lang==='en');
+}
+
+/* ─── LIGHTBOX ─── */
+function openLightbox(src){
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('lightbox').addEventListener('click', function(e){
+  if(e.target === this) closeLightbox();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeLightbox();
+});
+
+/* ─── FAQ ─── */
+function toggleFaq(btn){
+  const item = btn.closest('.faq-item');
+  item.classList.toggle('open');
+}
+
+/* ─── SCROLL REVEAL ─── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* ─── COUNTER ANIMATION ─── */
+function animateCounter(el, target, suffix=''){
+  let start = 0;
+  const duration = 1600;
+  const step = timestamp => {
+    if(!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    const value = Math.floor(progress * target);
+    el.textContent = (suffix === '$0' ? '$' : '') + (suffix === '$0' ? '0' : value) + (suffix && suffix !== '$0' ? suffix : '');
+    if(progress < 1) requestAnimationFrame(step);
+    else el.textContent = suffix === '$0' ? '$0' : target + suffix;
+  };
+  requestAnimationFrame(step);
+}
+const statNumbers = document.querySelectorAll('.stat-number');
+const statObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      const el = e.target;
+      const txt = el.textContent;
+      if(txt === '$0') return;
+      const num = parseInt(txt);
+      animateCounter(el, num);
+      statObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+statNumbers.forEach(el => statObserver.observe(el));
+</script>
+</body>
+</html>
