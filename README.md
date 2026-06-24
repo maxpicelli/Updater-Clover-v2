@@ -58,13 +58,8 @@ Com ele, você pode:
 
 - macOS Ventura
 - macOS Tahoe
-
-## Download
-
-Baixe a release atual:
-
-[Updater Clover V2.dmg](https://github.com/maxpicelli/Updater-Clover-v2/releases/download/1.0.0/Updater-Clover-V2.dmg)
-
+- macOs Golden Gate
+  
 ## Site do projeto
 
 [GitHub Pages](https://maxpicelli.github.io/Updater-Clover-v2/)
