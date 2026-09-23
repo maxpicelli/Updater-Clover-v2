@@ -74,15 +74,19 @@ Com ele, você pode:
 
 ![Update Clover Dark](assets/images/update-clover-dark.png)
 
-![Clover Builder Dark](assets/images/clover-builder-dark.png)
+![Update Clover Light](assets/images/update-clover-light.png)
 
-![Clover Builder Light](assets/images/clover-builder-light.png)
+![Clover Builder Dark](assets/images/clover-builder-dark.png)
 
 ### Backup EFI
 
 ![Backup EFI Dark](assets/images/efi-backup-dark.png)
 
-![Backup EFI Light](assets/images/efi-backup-light.png)
+### Commit GitHub
+
+![Commit GitHub Dark](assets/images/commit-github-dark.png)
+
+![Commit GitHub Light](assets/images/commit-github-light.png)
 
 ### Info System
 

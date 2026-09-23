@@ -1027,7 +1027,7 @@
   <!-- ── STATS ── -->
   <div class="stats">
     <div class="stat-item reveal">
-      <div class="stat-number">4</div>
+      <div class="stat-number">5</div>
       <div class="stat-label" data-pt>Abas Funcionais</div>
       <div class="stat-label" data-en>Functional Tabs</div>
     </div>
@@ -1053,8 +1053,8 @@
     <div class="section-header reveal">
       <span class="section-tag" data-pt>Recursos</span><span class="section-tag" data-en>Features</span>
       <h2 class="section-title">
-        <span class="block-pt">4 Abas Poderosas em 1 App</span>
-        <span class="block-en">4 Powerful Tabs in 1 App</span>
+        <span class="block-pt">5 Abas Poderosas em 1 App</span>
+        <span class="block-en">5 Powerful Tabs in 1 App</span>
       </h2>
       <p class="section-desc">
         <span class="block-pt">Tudo que você precisa para gerenciar o bootloader Clover e a partição EFI do seu Hackintosh.</span>
@@ -1114,6 +1114,19 @@
         </p>
         <span class="feature-tag">sym · Auto search</span>
       </div>
+
+      <!-- Commit GitHub -->
+      <div class="feature-card reveal">
+        <span class="feature-icon">🐙</span>
+        <div class="feature-title">Commit GitHub</div>
+        <p class="feature-desc block-pt">
+          Mostra o último commit do repositório oficial do Clover e compara com o seu clone local. Atualiza o código-fonte e abre o commit ou o GitHub Actions direto do app.
+        </p>
+        <p class="feature-desc block-en">
+          Shows the latest commit from the official Clover repository and compares it with your local clone. Updates the source and opens the commit or GitHub Actions straight from the app.
+        </p>
+        <span class="feature-tag">Last Build · GitHub Actions</span>
+      </div>
     </div>
 
     <!-- Files Box -->
@@ -1128,7 +1141,7 @@
         <span class="file-chip">VBoxHfs.efi</span>
         <span class="file-chip">EFI/CLOVER/tools/ (modo full)</span>
       </div>
-      <span class="log-line">[Update] EFI bootloader: Clover 5171 (release, commit f6a3d61c3)</span>
+      <span class="log-line">[Update] EFI bootloader: Clover r5175 (release, commit a193364cc)</span>
     </div>
   </section>
 
@@ -1154,6 +1167,13 @@
           Update Clover
         </div>
       </div>
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/update-clover-light.png')">
+        <img src="assets/images/update-clover-light.png" alt="Update Clover tab — Light" loading="lazy" />
+        <div class="screenshot-label">
+          <span class="screenshot-badge badge-light">Light</span>
+          Update Clover
+        </div>
+      </div>
       <div class="screenshot-item reveal" onclick="openLightbox('assets/images/clover-builder-dark.png')">
         <img src="assets/images/clover-builder-dark.png" alt="Clover Builder screen — Dark" loading="lazy" />
         <div class="screenshot-label">
@@ -1168,18 +1188,18 @@
           EFI Backup
         </div>
       </div>
-      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/efi-backup-light.png')">
-        <img src="assets/images/efi-backup-light.png" alt="EFI Backup tab — Light" loading="lazy" />
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/commit-github-dark.png')">
+        <img src="assets/images/commit-github-dark.png" alt="Commit GitHub tab — Dark" loading="lazy" />
         <div class="screenshot-label">
-          <span class="screenshot-badge badge-light">Light</span>
-          EFI Backup
+          <span class="screenshot-badge badge-dark">Novo</span>
+          Commit GitHub
         </div>
       </div>
-      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/clover-builder-light.png')">
-        <img src="assets/images/clover-builder-light.png" alt="Clover Builder screen — Light" loading="lazy" />
+      <div class="screenshot-item reveal" onclick="openLightbox('assets/images/commit-github-light.png')">
+        <img src="assets/images/commit-github-light.png" alt="Commit GitHub tab — Light" loading="lazy" />
         <div class="screenshot-label">
           <span class="screenshot-badge badge-light">Light</span>
-          Clover Builder
+          Commit GitHub
         </div>
       </div>
       <div class="screenshot-item reveal" onclick="openLightbox('assets/images/info-sistema.png')">
@@ -1216,7 +1236,7 @@
         </div>
       </div>
       <div class="theme-card reveal">
-        <img src="assets/images/clover-builder-light.png" alt="Tema Light" loading="lazy" />
+        <img src="assets/images/update-clover-light.png" alt="Tema Light" loading="lazy" />
         <div class="theme-info">
           <div class="theme-name">☀️ <span data-pt>Modo Claro</span><span data-en>Light Mode</span></div>
           <p class="theme-desc block-pt">Interface clara e limpa, perfeita para ambientes bem iluminados. Confortável para uso diurno.</p>

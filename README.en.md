@@ -8,13 +8,15 @@
 
 ![Update Clover Dark](assets/images/update-clover-dark.png)
 
-![Clover Builder Dark](assets/images/clover-builder-dark.png)
+![Update Clover Light](assets/images/update-clover-light.png)
 
-![Clover Builder Light](assets/images/clover-builder-light.png)
+![Clover Builder Dark](assets/images/clover-builder-dark.png)
 
 ![EFI Backup Dark](assets/images/efi-backup-dark.png)
 
-![EFI Backup Light](assets/images/efi-backup-light.png)
+![Commit GitHub Dark](assets/images/commit-github-dark.png)
+
+![Commit GitHub Light](assets/images/commit-github-light.png)
 
 ![Info System](assets/images/info-sistema.png)
 
